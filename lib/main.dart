@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 
 import 'core/network/dio_client.dart';
 import 'core/router/app_router.dart';
+import 'core/storage/hive_boxes.dart';
 import 'core/theme/app_theme.dart';
+import 'features/news/data/datasource/news_local_datasource.dart';
 import 'features/news/data/datasource/news_remote_datasource.dart';
 import 'features/news/data/repository/news_repository_impl.dart';
 import 'features/news/domain/repository/news_repository.dart';
@@ -12,12 +15,19 @@ import 'features/news/domain/usecases/get_news_usecase.dart';
 import 'features/news/presentation/bloc/news_bloc.dart';
 import 'features/news/presentation/bloc/news_event.dart';
 
-void main() {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  await Hive.initFlutter();
+  final cacheBox = await Hive.openBox<String>(HiveBoxes.newsCache);
 
   final dio = DioClient.create();
   final NewsRemoteDataSource remote = NewsRemoteDataSourceImpl(dio: dio);
-  final NewsRepository repository = NewsRepositoryImpl(remoteDataSource: remote);
+  final NewsLocalDataSource local = NewsLocalDataSourceImpl(box: cacheBox);
+  final NewsRepository repository = NewsRepositoryImpl(
+    remoteDataSource: remote,
+    localDataSource: local,
+  );
   final getTopHeadlines = GetTopHeadlinesUseCase(repository);
   final searchNews = SearchNewsUseCase(repository);
   final router = createAppRouter();

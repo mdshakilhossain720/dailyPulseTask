@@ -45,6 +45,19 @@ class ArticleModel {
     );
   }
 
+  Map<String, dynamic> toJson() {
+    return <String, dynamic>{
+      'title': title,
+      'description': description,
+      'url': url,
+      'urlToImage': urlToImage,
+      'publishedAt': publishedAt?.toUtc().toIso8601String(),
+      'author': author,
+      'content': content,
+      'source': <String, dynamic>{'name': sourceName},
+    };
+  }
+
   Article toEntity() {
     return Article(
       title: title,

@@ -8,6 +8,7 @@ DailyPulse is a Flutter news aggregator that loads top headlines and search resu
 - **Search** articles via the `/everything` endpoint (keyword query).
 - Open an **article detail** screen with image, description, truncated content, and **Open in browser**.
 - **Shimmer** placeholders while loading; **error** and **empty** states with retry actions.
+- **Offline cache:** successful headline and search responses are stored in **Hive**; if the network request fails, the app falls back to the last cached articles when available.
 
 ## Prerequisites
 
@@ -72,7 +73,7 @@ The app follows **layered clean architecture** so that UI and business rules do 
 | Layer | Responsibility |
 |--------|----------------|
 | **Domain** | Entities (`Article`), repository **interfaces**, and **use cases** (`GetTopHeadlinesUseCase`, `SearchNewsUseCase`). No Flutter or Dio imports. |
-| **Data** | **Remote data source** (Dio calls to NewsAPI), **DTOs** (`ArticleModel` with `fromJson` / `toEntity`), and **repository implementations** that map failures to a small `Result` type (`Success` / `Failure`). |
+| **Data** | **Remote data source** (Dio calls to NewsAPI), **local data source** ([Hive](https://pub.dev/packages/hive) JSON cache), **DTOs** (`ArticleModel` with `fromJson` / `toJson` / `toEntity`), and **repository implementations** that write through on success and fall back to cache on failure, using `Result` (`Success` / `Failure`). |
 | **Presentation** | **Bloc** (`NewsBloc` + events/states), screens, and widgets. The Bloc calls use cases only. |
 
 **Why this shape**
@@ -87,14 +88,15 @@ The app follows **layered clean architecture** so that UI and business rules do 
 - **Dio** with a dedicated **API key interceptor** sending `X-Api-Key` (supported by NewsAPI) so query strings stay free of secrets.
 - **go_router** for declarative routes; article details receive an `Article` via `extra`.
 - **Shimmer** and **cached network images** for perceived performance and smoother lists.
+- **Hive** (`hive_flutter`) initialized in `main()`; article lists are serialized as JSON in a single box (`HiveBoxes.newsCache`) keyed by category or search query.
 
 ## Project layout (high level)
 
 ```
 lib/
-├── core/                 # Networking, theme, router, shared utils/widgets
+├── core/                 # Networking, storage (Hive box names), theme, router, utils/widgets
 ├── features/news/
-│   ├── data/             # Models, remote datasource, repository impl
+│   ├── data/             # Models, remote + local datasources, repository impl
 │   ├── domain/           # Entities, repository contract, use cases
 │   └── presentation/     # Bloc, screens, feature widgets
 └── main.dart             # Composition root (manual dependency wiring)
