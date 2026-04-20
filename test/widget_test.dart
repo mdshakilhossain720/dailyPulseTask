@@ -1,30 +1,39 @@
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
-
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:dailypulse/main.dart';
+import 'package:dailypulse/core/router/app_router.dart';
+import 'package:dailypulse/core/theme/app_theme.dart';
+import 'package:dailypulse/features/news/data/datasource/news_remote_datasource.dart';
+import 'package:dailypulse/features/news/data/repository/news_repository_impl.dart';
+import 'package:dailypulse/features/news/domain/usecases/get_news_usecase.dart';
+import 'package:dailypulse/features/news/presentation/bloc/news_bloc.dart';
+import 'package:dailypulse/features/news/presentation/bloc/news_event.dart';
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp());
+  testWidgets('DailyPulse shows title', (WidgetTester tester) async {
+    final dio = Dio();
+    final remote = NewsRemoteDataSourceImpl(dio: dio);
+    final repository = NewsRepositoryImpl(remoteDataSource: remote);
+    final getTopHeadlines = GetTopHeadlinesUseCase(repository);
+    final searchNews = SearchNewsUseCase(repository);
+    final router = createAppRouter();
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
+    await tester.pumpWidget(
+      BlocProvider(
+        create: (_) => NewsBloc(
+          getTopHeadlines: getTopHeadlines,
+          searchNews: searchNews,
+        )..add(const NewsHeadlinesRequested()),
+        child: MaterialApp.router(
+          theme: AppTheme.light(),
+          routerConfig: router,
+        ),
+      ),
+    );
 
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
     await tester.pump();
-
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+    expect(find.text('DailyPulse'), findsOneWidget);
   });
 }
