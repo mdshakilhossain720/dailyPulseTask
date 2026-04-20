@@ -3,7 +3,19 @@ import 'package:flutter/foundation.dart';
 
 import 'api_endpoints.dart';
 
-/// Configures [Dio] for NewsAPI (JSON, timeouts). Logging only in debug builds.
+
+final class _NewsApiKeyInterceptor extends Interceptor {
+  @override
+  void onRequest(RequestOptions options, RequestInterceptorHandler handler) {
+    final key = ApiEndpoints.newsApiKey;
+    if (key.isNotEmpty) {
+      options.headers[ApiEndpoints.xApiKeyHeader] = key;
+    }
+    handler.next(options);
+  }
+}
+
+
 abstract final class DioClient {
   static Dio create() {
     final dio = Dio(
@@ -15,9 +27,12 @@ abstract final class DioClient {
       ),
     );
 
+    dio.interceptors.add(_NewsApiKeyInterceptor());
+
     if (kDebugMode) {
       dio.interceptors.add(
         LogInterceptor(
+          requestHeader: false,
           requestBody: false,
           responseBody: true,
           error: true,

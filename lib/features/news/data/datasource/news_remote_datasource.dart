@@ -14,16 +14,15 @@ class NewsRemoteDataSourceImpl implements NewsRemoteDataSource {
 
   final Dio _dio;
 
-  String get _apiKey => ApiEndpoints.newsApiKey;
-
   void _ensureApiKey() {
-    if (_apiKey.isEmpty) {
+    if (ApiEndpoints.newsApiKey.isEmpty) {
       throw Exception(
         'Missing News API key. Run with --dart-define=NEWS_API_KEY=your_key',
       );
     }
   }
 
+  /// Top headlines: `country` + `category` (see NewsAPI — cannot mix with `sources`).
   @override
   Future<List<ArticleModel>> fetchTopHeadlines({required String category}) async {
     _ensureApiKey();
@@ -32,13 +31,14 @@ class NewsRemoteDataSourceImpl implements NewsRemoteDataSource {
       queryParameters: <String, dynamic>{
         'country': ApiEndpoints.defaultCountry,
         'category': category,
-        'pageSize': ApiEndpoints.pageSize,
-        'apiKey': _apiKey,
+        'pageSize': ApiEndpoints.defaultPageSize,
+        'page': 1,
       },
     );
     return _parseArticles(response.data);
   }
 
+  /// Everything: `q` (query), `pageSize`, `page`, `sortBy`, `language`.
   @override
   Future<List<ArticleModel>> fetchEverything({required String query}) async {
     _ensureApiKey();
@@ -50,10 +50,10 @@ class NewsRemoteDataSourceImpl implements NewsRemoteDataSource {
       ApiEndpoints.everything,
       queryParameters: <String, dynamic>{
         'q': q,
-        'pageSize': ApiEndpoints.pageSize,
+        'pageSize': ApiEndpoints.defaultPageSize,
+        'page': 1,
         'sortBy': 'publishedAt',
         'language': 'en',
-        'apiKey': _apiKey,
       },
     );
     return _parseArticles(response.data);

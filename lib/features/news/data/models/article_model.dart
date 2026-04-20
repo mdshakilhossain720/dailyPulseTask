@@ -1,6 +1,6 @@
 import '../../domain/entities/article.dart';
 
-/// Data transfer object matching NewsAPI article JSON.
+
 class ArticleModel {
   const ArticleModel({
     required this.title,

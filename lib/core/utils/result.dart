@@ -1,4 +1,4 @@
-/// Lightweight [Result] for domain / data layers without extra packages.
+
 sealed class Result<T> {
   const Result();
 

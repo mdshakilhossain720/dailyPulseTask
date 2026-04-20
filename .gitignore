@@ -43,3 +43,6 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Local NewsAPI key (copy from api_keys.json.example)
+api_keys.json
